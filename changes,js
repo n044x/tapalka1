@@ -1,0 +1,118 @@
+
+let userId = 'default';
+let balance = 0;
+let coinsPerClick = 1;
+let passiveIncomePerSecond = 1;
+let passiveIncomeInterval;
+
+
+const balanceElement = document.getElementById('balance');
+const coinsPerClickElement = document.getElementById('coinsPerClick');
+const passiveIncomeElement = document.getElementById('passiveIncome');
+const clickButton = document.getElementById('clickButton');
+const errorElement = document.getElementById('error');
+
+
+async function fetchUserData() {
+    try {
+        const response = await fetch('http://localhost:3000/user', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'userId': userId
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Помилка отримання даних');
+        }
+        
+        const userData = await response.json();
+        updateUserData(userData);
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+
+function updateUserData(data) {
+    balance = data.balance;
+    coinsPerClick = data.coinsPerClick;
+    passiveIncomePerSecond = data.passiveIncomePerSecond;
+    
+    balanceElement.textContent = balance;
+    coinsPerClickElement.textContent = coinsPerClick;
+    passiveIncomeElement.textContent = `${passiveIncomePerSecond}/сек`;
+}
+
+
+async function handleClick() {
+    try {
+        const response = await fetch('http://localhost:3000/click', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Помилка при кліку');
+        }
+        
+        const data = await response.json();
+        updateUserData(data);
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+
+async function handlePassiveIncome() {
+    try {
+        const response = await fetch('http://localhost:3000/passive-income', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Помилка пасивного доходу');
+        }
+        
+        const data = await response.json();
+        updateUserData(data);
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+
+function showError(message) {
+    errorElement.textContent = message;
+    setTimeout(() => {
+        errorElement.textContent = '';
+    }, 3000);
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    fetchUserData();
+    
+    
+    clickButton.addEventListener('click', handleClick);
+    
+    
+    passiveIncomeInterval = setInterval(handlePassiveIncome, 1000);
+});
+
+
+window.addEventListener('beforeunload', () => {
+    clearInterval(passiveIncomeInterval);
+});
