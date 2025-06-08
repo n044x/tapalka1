@@ -1,0 +1,91 @@
+
+function showMessage(elementId, message, isError = false) {
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.className = `message ${isError ? 'error' : 'success'}`;
+}
+
+
+async function register() {
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+
+    try {
+        const response = await fetch('http://localhost:3000/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message);
+        }
+
+        showMessage('regMessage', data.message);
+        
+        localStorage.setItem('registeredEmail', email);
+    } catch (error) {
+        showMessage('regMessage', error.message, true);
+    }
+}
+
+
+async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const response = await fetch('http://localhost:3000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message);
+        }
+
+        showMessage('loginMessage', data.message);
+        
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        updateUserInfo();
+    } catch (error) {
+        showMessage('loginMessage', error.message, true);
+    }
+}
+
+
+function updateUserInfo() {
+    const userInfo = document.getElementById('userInfo');
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (user) {
+        userInfo.innerHTML = `
+            <h2>Поточний користувач</h2>
+            <p>Email: ${user.email}</p>
+            <button onclick="logout()">Вийти</button>
+        `;
+    } else {
+        userInfo.innerHTML = '';
+    }
+}
+
+
+function logout() {
+    localStorage.removeItem('currentUser');
+    updateUserInfo();
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateUserInfo();
+});
+
